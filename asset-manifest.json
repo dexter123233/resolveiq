@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/resolveiq/static/css/main.e6c13ad2.css",
+    "main.js": "/resolveiq/static/js/main.856f7e88.js",
+    "index.html": "/resolveiq/index.html",
+    "main.e6c13ad2.css.map": "/resolveiq/static/css/main.e6c13ad2.css.map",
+    "main.856f7e88.js.map": "/resolveiq/static/js/main.856f7e88.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.856f7e88.js"
+  ]
+}
