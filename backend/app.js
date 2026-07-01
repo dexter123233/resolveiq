@@ -14,7 +14,11 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    cb(null, file.mimetype.startsWith('image/'));
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed.'), false);
+    }
   },
 });
 
@@ -45,26 +49,26 @@ app.post('/api/resolve', upload.single('image'), async (req, res) => {
   let resolution = buildFallbackResolution(text, triage, docs);
   let model = { provider: 'local-fallback', model: MODEL, usage: null, time_info: null, latency_ms: 0 };
 
+  let modelError = null;
   try {
     const modelResult = await synthesizeResolution({ text, imageDataUri, triage, docs });
-    if (modelResult.resolution && typeof modelResult.resolution === 'object') {
-      resolution = {
-        ...resolution,
-        ...modelResult.resolution,
-        citations: Array.isArray(modelResult.resolution.citations)
-          ? modelResult.resolution.citations
-          : resolution.citations,
-      };
-      model = {
-        provider: 'cerebras',
-        model: MODEL,
-        usage: modelResult.usage,
-        time_info: modelResult.time_info,
-        latency_ms: modelResult.latency_ms,
-      };
-    }
+    resolution = {
+      ...resolution,
+      ...modelResult.resolution,
+      citations: Array.isArray(modelResult.resolution.citations)
+        ? modelResult.resolution.citations
+        : resolution.citations,
+    };
+    model = {
+      provider: 'cerebras',
+      model: MODEL,
+      usage: modelResult.usage,
+      time_info: modelResult.time_info,
+      latency_ms: modelResult.latency_ms,
+    };
   } catch (error) {
-    console.error('Cerebras resolution failed:', error.message);
+    modelError = error.message || 'Unknown model error';
+    console.error('Cerebras resolution failed, using fallback:', modelError);
   }
 
   const escalated = shouldEscalate(resolution.severity);
@@ -90,6 +94,7 @@ app.post('/api/resolve', upload.single('image'), async (req, res) => {
       inference_latency_ms: model.latency_ms,
       usage: model.usage,
       time_info: model.time_info,
+      ...(modelError ? { fallback_reason: modelError } : {}),
     },
   });
 });
@@ -98,7 +103,10 @@ app.use((error, _req, res, _next) => {
   if (error instanceof multer.MulterError) {
     return res.status(400).json({ error: error.message });
   }
-  console.error(error);
+  if (error.message === 'Only image files are allowed.') {
+    return res.status(400).json({ error: error.message });
+  }
+  console.error('Unhandled error:', error);
   return res.status(500).json({ error: 'Unexpected server error.' });
 });
 

@@ -8,7 +8,12 @@ function parseJson(content) {
     return JSON.parse(content);
   } catch (_error) {
     const match = content.match(/\{[\s\S]*\}/);
-    return match ? JSON.parse(match[0]) : null;
+    if (!match) return null;
+    try {
+      return JSON.parse(match[0]);
+    } catch (_innerError) {
+      return null;
+    }
   }
 }
 

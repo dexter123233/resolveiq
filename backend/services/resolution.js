@@ -117,9 +117,14 @@ async function synthesizeResolution({ text, imageDataUri, triage, docs }) {
   }
 
   const payload = await response.json();
+  const resolution = parseJson(payload.choices?.[0]?.message?.content);
+
+  if (!resolution || typeof resolution !== 'object') {
+    throw new Error('Model returned invalid or empty resolution JSON.');
+  }
 
   return {
-    resolution: parseJson(payload.choices?.[0]?.message?.content),
+    resolution,
     usage: payload.usage || null,
     time_info: payload.time_info || null,
     latency_ms: Date.now() - startedAt,

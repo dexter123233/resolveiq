@@ -29,8 +29,14 @@ function App() {
     try {
       const response = await axios.post(`${API_URL}/api/resolve`, formData);
       setResult(response.data);
-    } catch (error: any) {
-      setError(error.response?.data?.error || 'Error resolving ticket');
+    } catch (err: any) {
+      if (err.response) {
+        setError(err.response.data?.error || `Server error (${err.response.status})`);
+      } else if (err.request) {
+        setError('Unable to reach the server. Please check your connection and try again.');
+      } else {
+        setError('An unexpected error occurred while preparing the request.');
+      }
     } finally {
       setLoading(false);
     }
