@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Upload, Send, Loader2, ShieldAlert, Clock, Database, Zap } from 'lucide-react';
+import StatCard from './components/StatCard';
+import PipelineStep from './components/PipelineStep';
+import StatusBadge from './components/StatusBadge';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -32,6 +35,16 @@ function App() {
       setLoading(false);
     }
   };
+
+  const pipelineSteps = result
+    ? [
+        'Triage',
+        result.image_received ? 'Vision' : 'Vision skipped',
+        'Retrieval',
+        'Response',
+        result.escalated ? 'Escalation mocked' : 'Escalation skipped',
+      ]
+    : [];
 
   return (
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif', maxWidth: '980px', margin: '32px auto', padding: '20px', color: '#111827' }}>
@@ -78,31 +91,27 @@ function App() {
       {result && (
         <div style={{ marginTop: '30px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '14px', background: 'white' }}>
-              <Clock size={18} color="#2563eb" />
-              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>Total latency</div>
-              <strong>{result.metrics?.total_latency_ms ?? '-'} ms</strong>
-            </div>
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '14px', background: 'white' }}>
-              <Zap size={18} color="#16a34a" />
-              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>Provider</div>
-              <strong>{result.metrics?.provider}</strong>
-            </div>
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '14px', background: 'white' }}>
-              <Database size={18} color="#7c3aed" />
-              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>Citations</div>
-              <strong>{result.resolution?.citations?.join(', ') || 'None'}</strong>
-            </div>
+            <StatCard
+              icon={<Clock size={18} color="#2563eb" />}
+              label="Total latency"
+              value={`${result.metrics?.total_latency_ms ?? '-'} ms`}
+            />
+            <StatCard
+              icon={<Zap size={18} color="#16a34a" />}
+              label="Provider"
+              value={result.metrics?.provider}
+            />
+            <StatCard
+              icon={<Database size={18} color="#7c3aed" />}
+              label="Citations"
+              value={result.resolution?.citations?.join(', ') || 'None'}
+            />
           </div>
 
           <div style={{ padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '600' }}>Resolution Draft</h2>
-            {result.escalated ? (
-              <span style={{ background: '#fee2e2', color: '#dc2626', padding: '4px 12px', borderRadius: '99px', fontSize: '12px', fontWeight: 'bold' }}>Escalated</span>
-            ) : (
-              <span style={{ background: '#dcfce7', color: '#16a34a', padding: '4px 12px', borderRadius: '99px', fontSize: '12px', fontWeight: 'bold' }}>Resolved</span>
-            )}
+            <StatusBadge escalated={result.escalated} />
           </div>
           
           <div style={{ color: '#374151', lineHeight: '1.6' }}>
@@ -117,11 +126,8 @@ function App() {
           </div>
 
           <div style={{ marginTop: '16px', display: 'grid', gap: '8px' }}>
-            {['Triage', result.image_received ? 'Vision' : 'Vision skipped', 'Retrieval', 'Response', result.escalated ? 'Escalation mocked' : 'Escalation skipped'].map((step) => (
-              <div key={step} style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #e5e7eb', padding: '10px 12px', borderRadius: '8px', background: 'white' }}>
-                <span>{step}</span>
-                <span style={{ color: '#16a34a', fontWeight: 600 }}>done</span>
-              </div>
+            {pipelineSteps.map((step) => (
+              <PipelineStep key={step} label={step} />
             ))}
           </div>
         </div>
