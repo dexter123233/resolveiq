@@ -371,8 +371,9 @@ describe('parseJson', () => {
     expect(result).toBeNull();
   });
 
-  test('throws on malformed JSON in braces (uncaught in fallback path)', () => {
-    expect(() => parseJson('{not valid json}')).toThrow(SyntaxError);
+  test('returns null for malformed JSON in braces', () => {
+    const result = parseJson('{not valid json}');
+    expect(result).toBeNull();
   });
 
   test('handles nested JSON objects', () => {
