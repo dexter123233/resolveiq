@@ -149,7 +149,7 @@ describe('POST /api/resolve', () => {
     expect(res.status).toBe(200);
   });
 
-  test('non-image file is ignored by multer filter', async () => {
+  test('non-image file is rejected by multer filter', async () => {
     const res = await request(app)
       .post('/api/resolve')
       .field('text', 'File upload test')
@@ -158,7 +158,7 @@ describe('POST /api/resolve', () => {
         contentType: 'text/plain',
       });
 
-    expect(res.status).toBe(200);
-    expect(res.body.image_received).toBe(false);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Only image files are allowed.');
   });
 });
